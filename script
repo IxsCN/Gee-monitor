@@ -1,0 +1,38 @@
+#!/bin/sh
+# Copyright (C) 2016 evenS
+
+get_CPU_IDLE(){
+    top -n1 |  awk 'NR==2{print $8}' | tr -d '%\n'
+}
+
+get_MEM_USED(){
+    top -n1 |  awk 'NR==1{print $2}'|tr -d 'K\n'
+}
+
+get_MEM_FREE(){
+    top -n1 |  awk 'NR==1{print $4}'|tr -d 'K\n'
+}
+
+install(){
+    mkdir -p /usr/lib/lua/luci/controller/app/ /usr/lib/lua/luci/view/app/
+    \cp -rf ./justgage.js /www/
+    \cp -rf ./raphael-2.1.4.min.js /www/
+    \cp -rf ./monitor.lua /usr/lib/lua/luci/controller/app/
+    \cp -rf ./monitor.htm /usr/lib/lua/luci/view/app/
+
+    sed -i 's#HiWiFi.addAdImgToElement($(".G-power-panel"));#//HiWiFi.addAdImgToElement($(".G-power-panel"));#g' /www/turbo-static/turbo/v2/js/admin_web/home.js
+    sed -i 's#HiWiFi.addAdTextToElement($("\#main_view"));#//HiWiFi.addAdTextToElement($("\#main_view"));#g' /www/turbo-static/turbo/v2/js/admin_web/home.js
+    
+    if [  `grep -c app/monitor /usr/lib/lua/luci/view/admin_web/footer.htm` = 0 ]; then
+        echo "<% include('app/monitor') %>" >> /usr/lib/lua/luci/view/admin_web/footer.htm
+    fi
+}
+
+uninstall(){
+    rm -rf /www/justgage.js /www/raphael-2.1.4.min.js /usr/lib/lua/luci/controller/app/monitor.lua /usr/lib/lua/luci/view/app/monitor.htm
+
+    sed -i 's#//HiWiFi.addAdImgToElement($(".G-power-panel"));#HiWiFi.addAdImgToElement($(".G-power-panel"));#g' /www/turbo-static/turbo/v2/js/admin_web/home.js
+    sed -i 's#//HiWiFi.addAdTextToElement($("\#main_view"));#HiWiFi.addAdTextToElement($("\#main_view"));#g' /www/turbo-static/turbo/v2/js/admin_web/home.js    
+
+    sed -i "/app\/monitor/d" /usr/lib/lua/luci/view/admin_web/footer.htm
+}
